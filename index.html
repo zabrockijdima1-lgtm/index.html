@@ -2,13 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Football</title>
+<title>Football Live</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-
 body{
 background:#0f172a;
 color:white;
@@ -25,18 +24,14 @@ border-radius:10px;
 cursor:pointer;
 }
 
-.match:hover{
-background:#334155;
-}
-
-#playerPage{
-display:none;
-}
-
 video{
 width:100%;
 height:100vh;
 background:black;
+}
+
+#playerPage{
+display:none;
 }
 
 button{
@@ -48,7 +43,6 @@ color:white;
 border-radius:8px;
 cursor:pointer;
 }
-
 </style>
 </head>
 
@@ -59,7 +53,7 @@ cursor:pointer;
 <h2>⚽ Live Football</h2>
 
 <div class="match" onclick="play()">
-<h3>Sports Channel Live</h3>
+<h3>Football Channel</h3>
 <p>LIVE</p>
 </div>
 
@@ -76,7 +70,7 @@ cursor:pointer;
 <script>
 
 const stream =
-"https://austchannel-live.akamaized.net/hls/live/2002736/austchannel-sport/master.m3u8"
+"https://ythls.onrender.com/channel/UCkyrSWEcjZKpIwMxiPfOcgg.m3u8"
 
 function play(){
 
