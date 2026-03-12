@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>⚽ Live Football</title>
+<title>Live Football</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -13,12 +12,8 @@ body{
 background:#0f172a;
 color:white;
 font-family:Arial;
-text-align:center;
 margin:0;
-}
-
-h1{
-padding:10px;
+text-align:center;
 }
 
 .match{
@@ -44,8 +39,8 @@ display:none;
 }
 
 button{
-margin-top:10px;
-padding:8px 15px;
+margin:10px;
+padding:10px;
 background:#2563eb;
 border:none;
 color:white;
@@ -59,7 +54,7 @@ cursor:pointer;
 
 <body>
 
-<h1>⚽ Live Matches</h1>
+<h2>⚽ Live Matches</h2>
 
 <div id="matches"></div>
 
@@ -98,7 +93,7 @@ div.className="match"
 div.innerHTML = `
 <h3>${m.teams.home.name} vs ${m.teams.away.name}</h3>
 <p>${m.fixture.status.elapsed || 0}'</p>
-<button onclick="play()">📺 Дивитися трансляцію</button>
+<button onclick="watch('${m.teams.home.name} ${m.teams.away.name}')">📺 Дивитися</button>
 `
 
 container.appendChild(div)
@@ -107,13 +102,15 @@ container.appendChild(div)
 
 }
 
-function play(){
+function watch(query){
 
 document.getElementById("matches").style.display="none"
 document.getElementById("player").style.display="block"
 
+let search = encodeURIComponent(query + " live")
+
 document.getElementById("video").src =
-"https://www.youtube.com/embed/jNQXAC9IVRw?autoplay=1"
+"https://www.youtube.com/embed?listType=search&list=" + search
 
 }
 
