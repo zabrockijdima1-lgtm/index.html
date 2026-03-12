@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Football Live</title>
+<title>Live Football</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,10 +15,6 @@ color:white;
 font-family:Arial;
 text-align:center;
 margin:0;
-}
-
-#matches{
-padding:10px;
 }
 
 .match{
@@ -62,7 +58,10 @@ cursor:pointer;
 
 <h2>⚽ Live Football</h2>
 
-<div id="matches"></div>
+<div class="match" onclick="play()">
+<h3>Sports Channel Live</h3>
+<p>LIVE</p>
+</div>
 
 </div>
 
@@ -76,37 +75,10 @@ cursor:pointer;
 
 <script>
 
-const matches = [
+const stream =
+"https://austchannel-live.akamaized.net/hls/live/2002736/austchannel-sport/master.m3u8"
 
-{
-home:"Football Channel",
-away:"Live Stream",
-time:"LIVE",
-stream:"https://austchannel-live.akamaized.net/hls/live/2002736/austchannel-sport/master.m3u8"
-}
-
-]
-
-const container = document.getElementById("matches")
-
-matches.forEach(match => {
-
-let div = document.createElement("div")
-
-div.className = "match"
-
-div.innerHTML = `
-<h3>${match.home}</h3>
-<p>${match.time}</p>
-`
-
-div.onclick = () => openStream(match.stream)
-
-container.appendChild(div)
-
-})
-
-function openStream(stream){
+function play(){
 
 document.getElementById("matchesPage").style.display="none"
 document.getElementById("playerPage").style.display="block"
@@ -131,8 +103,6 @@ function back(){
 
 document.getElementById("playerPage").style.display="none"
 document.getElementById("matchesPage").style.display="block"
-
-document.getElementById("video").src=""
 
 }
 
