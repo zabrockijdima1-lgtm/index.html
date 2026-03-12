@@ -5,7 +5,6 @@
 <title>Football Live</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
 
@@ -33,14 +32,14 @@ cursor:pointer;
 background:#334155;
 }
 
-#player{
+#playerPage{
 display:none;
 }
 
-video{
+iframe{
 width:100%;
 height:100vh;
-background:black;
+border:none;
 }
 
 button{
@@ -67,11 +66,11 @@ cursor:pointer;
 
 </div>
 
-<div id="player">
+<div id="playerPage">
 
 <button onclick="back()">⬅ Назад</button>
 
-<video id="video" controls autoplay></video>
+<iframe id="player"></iframe>
 
 </div>
 
@@ -80,17 +79,10 @@ cursor:pointer;
 const matches = [
 
 {
-home:"Real Madrid",
-away:"Barcelona",
+home:"Lech Poznan",
+away:"Shakhtar Donetsk",
 time:"21:00",
-stream:"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
-},
-
-{
-home:"Arsenal",
-away:"Chelsea",
-time:"19:30",
-stream:"https://test-streams.mux.dev/test_001/stream.m3u8"
+stream:"https://www.youtube.com/watch?v=wdyAu7Dw018"
 }
 
 ]
@@ -114,31 +106,24 @@ container.appendChild(div)
 
 })
 
-function openStream(stream){
+function openStream(url){
 
 document.getElementById("matchesPage").style.display="none"
-document.getElementById("player").style.display="block"
+document.getElementById("playerPage").style.display="block"
 
-const video = document.getElementById("video")
+let videoId = url.split("v=")[1]
 
-if(Hls.isSupported()){
-
-const hls = new Hls()
-hls.loadSource(stream)
-hls.attachMedia(video)
-
-}else{
-
-video.src = stream
-
-}
+document.getElementById("player").src =
+"https://www.youtube.com/embed/"+videoId+"?autoplay=1"
 
 }
 
 function back(){
 
-document.getElementById("player").style.display="none"
+document.getElementById("playerPage").style.display="none"
 document.getElementById("matchesPage").style.display="block"
+
+document.getElementById("player").src=""
 
 }
 
