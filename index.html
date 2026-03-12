@@ -2,11 +2,12 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Live Football</title>
+<title>Football Live</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+
 body{
 background:#0f172a;
 color:white;
@@ -15,34 +16,107 @@ text-align:center;
 margin:0;
 }
 
-video{
+.match{
+background:#1e293b;
+margin:10px;
+padding:15px;
+border-radius:10px;
+cursor:pointer;
+}
+
+.match:hover{
+background:#334155;
+}
+
+iframe{
 width:100%;
 height:100vh;
-background:black;
+border:none;
 }
+
+#player{
+display:none;
+}
+
+button{
+margin:10px;
+padding:10px 20px;
+background:#2563eb;
+border:none;
+color:white;
+border-radius:8px;
+cursor:pointer;
+}
+
 </style>
+
 </head>
 
 <body>
 
-<video id="video" controls autoplay></video>
+<div id="matches"></div>
+
+<div id="player">
+
+<button onclick="back()">⬅ Назад</button>
+
+<iframe id="video"></iframe>
+
+</div>
 
 <script>
 
-const stream =
-"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+const matches = [
 
-const video = document.getElementById("video")
+{
+home:"Lech Poznan",
+away:"Shakhtar",
+youtube:"wdyAu7Dw018"
+},
 
-if(Hls.isSupported()){
+{
+home:"Real Madrid",
+away:"Barcelona",
+youtube:"jNQXAC9IVRw"
+}
 
-const hls = new Hls()
-hls.loadSource(stream)
-hls.attachMedia(video)
+]
 
-}else{
+const container = document.getElementById("matches")
 
-video.src = stream
+matches.forEach(match => {
+
+let div = document.createElement("div")
+
+div.className = "match"
+
+div.innerHTML = `
+<h3>${match.home} vs ${match.away}</h3>
+<p>LIVE</p>
+`
+
+div.onclick = () => play(match.youtube)
+
+container.appendChild(div)
+
+})
+
+function play(id){
+
+document.getElementById("matches").style.display="none"
+document.getElementById("player").style.display="block"
+
+document.getElementById("video").src =
+"https://www.youtube.com/embed/"+id+"?autoplay=1"
+
+}
+
+function back(){
+
+document.getElementById("player").style.display="none"
+document.getElementById("matches").style.display="block"
+
+document.getElementById("video").src=""
 
 }
 
