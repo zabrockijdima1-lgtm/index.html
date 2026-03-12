@@ -2,10 +2,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Football Live</title>
+<title>Live Football</title>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 body{
@@ -16,66 +15,22 @@ text-align:center;
 margin:0;
 }
 
-.match{
-background:#1e293b;
-margin:10px;
-padding:15px;
-border-radius:10px;
-cursor:pointer;
-}
-
 video{
 width:100%;
 height:100vh;
 background:black;
-}
-
-#playerPage{
-display:none;
-}
-
-button{
-margin:10px;
-padding:10px 20px;
-background:#2563eb;
-border:none;
-color:white;
-border-radius:8px;
-cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<div id="matchesPage">
-
-<h2>⚽ Live Football</h2>
-
-<div class="match" onclick="play()">
-<h3>Football Channel</h3>
-<p>LIVE</p>
-</div>
-
-</div>
-
-<div id="playerPage">
-
-<button onclick="back()">⬅ Назад</button>
-
 <video id="video" controls autoplay></video>
-
-</div>
 
 <script>
 
 const stream =
-"https://ythls.onrender.com/channel/UCkyrSWEcjZKpIwMxiPfOcgg.m3u8"
-
-function play(){
-
-document.getElementById("matchesPage").style.display="none"
-document.getElementById("playerPage").style.display="block"
+"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
 
 const video = document.getElementById("video")
 
@@ -88,15 +43,6 @@ hls.attachMedia(video)
 }else{
 
 video.src = stream
-
-}
-
-}
-
-function back(){
-
-document.getElementById("playerPage").style.display="none"
-document.getElementById("matchesPage").style.display="block"
 
 }
 
