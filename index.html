@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Football Live</title>
 
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -36,10 +37,10 @@ background:#334155;
 display:none;
 }
 
-iframe{
+video{
 width:100%;
 height:100vh;
-border:none;
+background:black;
 }
 
 button{
@@ -53,14 +54,13 @@ cursor:pointer;
 }
 
 </style>
-
 </head>
 
 <body>
 
 <div id="matchesPage">
 
-<h2>⚽ Live Matches</h2>
+<h2>⚽ Live Football</h2>
 
 <div id="matches"></div>
 
@@ -70,7 +70,7 @@ cursor:pointer;
 
 <button onclick="back()">⬅ Назад</button>
 
-<iframe id="player"></iframe>
+<video id="video" controls autoplay></video>
 
 </div>
 
@@ -79,10 +79,10 @@ cursor:pointer;
 const matches = [
 
 {
-home:"Lech Poznan",
-away:"Shakhtar Donetsk",
-time:"21:00",
-stream:"https://www.youtube.com/watch?v=wdyAu7Dw018"
+home:"Football Channel",
+away:"Live Stream",
+time:"LIVE",
+stream:"https://austchannel-live.akamaized.net/hls/live/2002736/austchannel-sport/master.m3u8"
 }
 
 ]
@@ -96,7 +96,7 @@ let div = document.createElement("div")
 div.className = "match"
 
 div.innerHTML = `
-<h3>${match.home} vs ${match.away}</h3>
+<h3>${match.home}</h3>
 <p>${match.time}</p>
 `
 
@@ -106,15 +106,24 @@ container.appendChild(div)
 
 })
 
-function openStream(url){
+function openStream(stream){
 
 document.getElementById("matchesPage").style.display="none"
 document.getElementById("playerPage").style.display="block"
 
-let videoId = url.split("v=")[1]
+const video = document.getElementById("video")
 
-document.getElementById("player").src =
-"https://www.youtube.com/embed/"+videoId+"?autoplay=1"
+if(Hls.isSupported()){
+
+const hls = new Hls()
+hls.loadSource(stream)
+hls.attachMedia(video)
+
+}else{
+
+video.src = stream
+
+}
 
 }
 
@@ -123,7 +132,7 @@ function back(){
 document.getElementById("playerPage").style.display="none"
 document.getElementById("matchesPage").style.display="block"
 
-document.getElementById("player").src=""
+document.getElementById("video").src=""
 
 }
 
