@@ -7,7 +7,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 # ── Конфіг ────────────────────────────────────────────────────────────────────
 BOT_TOKEN   = os.getenv("BOT_TOKEN", "")
-TON_WALLET  = os.getenv("TON_WALLET", "")   # твій гаманець куди приходять TON
+TON_WALLET  = os.getenv("UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA", "")   # твій гаманець куди приходять TON
 TONCENTER   = "https://toncenter.com/api/v2"
 
 # ── NFT Каталог — реальні Telegram Gifts ─────────────────────────────────────
