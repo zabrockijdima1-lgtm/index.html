@@ -9,23 +9,22 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # НАЛАШТУВАННЯ — вставити свої дані
 # ════════════════════════════════════════════════════════
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
-TONCENTER_KEY = os.getenv("062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0", "")  # з toncenter.com (необов'язково)
-# ════════════════════════════════════════════════════════
+TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
 
-# ── NFT Каталог — Telegram Gifts ─────────────────────────────────────────────
+# ── NFT Каталог — реальні Telegram Gifts з Fragment ──────────────────────────
 NFT_CATALOG = [
-    {"id":"lollipop",  "name":"Lollipop",       "img":"https://nft.fragment.com/gift/lollipop-1.webp",       "floor":2.5,  "rarity":"Common",    "emoji":"🍭", "stars":"300+"},
+    {"id":"lollipop",  "name":"Lollipop",       "img":"https://nft.fragment.com/gift/lollipop-1.webp",       "floor":3.0,  "rarity":"Common",    "emoji":"🍭", "stars":"300+"},
     {"id":"icecream",  "name":"Ice Cream",       "img":"https://nft.fragment.com/gift/icecream-1.webp",       "floor":2.8,  "rarity":"Common",    "emoji":"🍦", "stars":"340+"},
     {"id":"cupcake",   "name":"Cupcake",         "img":"https://nft.fragment.com/gift/cupcake-1.webp",        "floor":2.9,  "rarity":"Common",    "emoji":"🧁", "stars":"340+"},
     {"id":"torch",     "name":"Torch",           "img":"https://nft.fragment.com/gift/torch-1.webp",          "floor":2.9,  "rarity":"Common",    "emoji":"🔦", "stars":"344+"},
-    {"id":"popsicle",  "name":"Popsicle",        "img":"https://nft.fragment.com/gift/popsicle-1.webp",       "floor":3.0,  "rarity":"Common",    "emoji":"🍫", "stars":"350+"},
-    {"id":"flamingo",  "name":"Flamingo Ring",   "img":"https://nft.fragment.com/gift/flamingo-1.webp",       "floor":3.1,  "rarity":"Common",    "emoji":"🦩", "stars":"370+"},
-    {"id":"noodles",   "name":"Spicy Noodles",   "img":"https://nft.fragment.com/gift/spicynoodles-1.webp",   "floor":3.2,  "rarity":"Common",    "emoji":"🍜", "stars":"377+"},
-    {"id":"poop",      "name":"Poop",            "img":"https://nft.fragment.com/gift/poop-1.webp",           "floor":4.1,  "rarity":"Rare",      "emoji":"💩", "stars":"479+"},
-    {"id":"tgbag",     "name":"Telegram Bag",    "img":"https://nft.fragment.com/gift/telegrambag-1.webp",    "floor":4.3,  "rarity":"Rare",      "emoji":"👜", "stars":"500+"},
+    {"id":"popsicle",  "name":"Popsicle",        "img":"https://nft.fragment.com/gift/popsicle-1.webp",       "floor":2.8,  "rarity":"Common",    "emoji":"🍫", "stars":"350+"},
+    {"id":"flamingo",  "name":"Flamingo Ring",   "img":"https://nft.fragment.com/gift/flamingo-1.webp",       "floor":3.0,  "rarity":"Common",    "emoji":"🦩", "stars":"370+"},
+    {"id":"noodles",   "name":"Spicy Noodles",   "img":"https://nft.fragment.com/gift/spicynoodles-1.webp",   "floor":3.05, "rarity":"Common",    "emoji":"🍜", "stars":"377+"},
+    {"id":"poop",      "name":"Poop",            "img":"https://nft.fragment.com/gift/poop-1.webp",           "floor":3.33, "rarity":"Rare",      "emoji":"💩", "stars":"479+"},
+    {"id":"tgbag",     "name":"Telegram Bag",    "img":"https://nft.fragment.com/gift/telegrambag-1.webp",    "floor":3.5,  "rarity":"Rare",      "emoji":"👜", "stars":"500+"},
     {"id":"clover",    "name":"Lucky Clover",    "img":"https://nft.fragment.com/gift/luckyclover-1.webp",    "floor":4.7,  "rarity":"Rare",      "emoji":"🍀", "stars":"554+"},
     {"id":"seeds",     "name":"Pumpkin Seeds",   "img":"https://nft.fragment.com/gift/pumpkinseeds-1.webp",   "floor":4.8,  "rarity":"Rare",      "emoji":"🌰", "stars":"560+"},
-    {"id":"cooldog",   "name":"Cool Dog",        "img":"https://nft.fragment.com/gift/cooldog-1.webp",        "floor":5.1,  "rarity":"Rare",      "emoji":"🐶", "stars":"600+"},
+    {"id":"cooldog",   "name":"Cool Dog",        "img":"https://nft.fragment.com/gift/cooldog-1.webp",        "floor":3.8,  "rarity":"Rare",      "emoji":"🐶", "stars":"600+"},
     {"id":"diamond",   "name":"Diamond Ring",    "img":"https://nft.fragment.com/gift/diamondring-1.webp",    "floor":15.0, "rarity":"Epic",      "emoji":"💍", "stars":"1800+"},
     {"id":"trophy",    "name":"Trophy",          "img":"https://nft.fragment.com/gift/trophy-1.webp",         "floor":25.0, "rarity":"Epic",      "emoji":"🏆", "stars":"3000+"},
     {"id":"rocket",    "name":"Rocket",          "img":"https://nft.fragment.com/gift/rocket-1.webp",         "floor":50.0, "rarity":"Legendary", "emoji":"🚀", "stars":"6000+"},
