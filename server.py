@@ -18,7 +18,14 @@ class G:
     start_ts  = 0.0
     round_id  = 0
     history:  list = []
-    SPEED     = 0.18   # швидкість ракети
+    SPEED     = 0.18   # базова швидкість
+
+    def calc_mult(self, elapsed):
+        # Повільний старт, потім прискорення
+        # Перші 5с — повільно, потім exp прискорюється
+        slow = elapsed * 0.06          # лінійна частина (повільно)
+        fast = math.exp(elapsed * 0.10) - 1  # exp частина
+        return round(1.0 + slow + fast, 2)
 
 g = G()
 
@@ -26,6 +33,8 @@ g = G()
 def gen_crash() -> float:
     r = random.random()
     if r < 0.05: return 1.00
+    # Crash point — реальний множник (не час)
+    # Нова формула росте повільніше, тому crash points такі ж
     return round(min(0.95 / (1 - r), 500), 2)
 
 # ── Broadcast ──────────────────────────────────────────────────────────────────
@@ -91,7 +100,7 @@ async def game_loop():
 
         while True:
             elapsed  = time.time() - g.start_ts
-            g.mult   = round(math.exp(elapsed * g.SPEED), 2)
+            g.mult   = g.calc_mult(elapsed)
 
             if g.mult >= g.crash_at:
                 g.mult = g.crash_at
