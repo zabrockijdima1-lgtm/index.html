@@ -47,43 +47,64 @@ pending_topups: dict = {}  # uid -> {amount, ts, checked}
 async def check_ton_tx(uid: int, amount: float, since_ts: float) -> bool:
     """Перевіряємо чи прийшла транзакція на наш гаманець"""
     if not TON_WALLET:
+        print(f"❌ TON_WALLET не вказано!")
         return False
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        # Використовуємо tonapi.io — не потребує API ключа
+        async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(
-                f"{TONCENTER}/getTransactions",
-                params={"address": TON_WALLET, "limit": 20}
+                f"https://tonapi.io/v2/accounts/{TON_WALLET}/events",
+                params={"limit": 20, "subject_only": "true"},
+                headers={"Accept": "application/json"}
             )
-            data = r.json()
-            if not data.get("ok"):
+            print(f"TON API status: {r.status_code}")
+            if r.status_code != 200:
+                print(f"TON API error: {r.text[:200]}")
                 return False
-            txs = data.get("result", [])
+
+            data = r.json()
+            events = data.get("events", [])
+            print(f"Got {len(events)} events, looking for {amount} TON since {since_ts}")
+
             nanos = int(amount * 1e9)
-            for tx in txs:
-                tx_time = tx.get("utime", 0)
-                if tx_time < since_ts - 60:  # транзакція має бути після запиту
+
+            for event in events:
+                event_ts = event.get("timestamp", 0)
+                if event_ts < since_ts - 120:
+                    print(f"Event too old: {event_ts} < {since_ts}")
                     break
-                # Перевіряємо вхідні транзакції
-                in_msg = tx.get("in_msg", {})
-                tx_value = int(in_msg.get("value", 0))
-                # Допускаємо відхилення ±0.05 TON (комісія)
-                if abs(tx_value - nanos) < 50_000_000:
-                    return True
+
+                for action in event.get("actions", []):
+                    if action.get("type") != "TonTransfer":
+                        continue
+                    details = action.get("TonTransfer", {})
+                    recipient = details.get("recipient", {}).get("address", "")
+                    tx_amount = details.get("amount", 0)
+                    print(f"TX: {tx_amount} nanos to {recipient[:20]}, need {nanos}")
+
+                    # Порівнюємо адресу і суму (±0.05 TON на комісію)
+                    if abs(tx_amount - nanos) < 50_000_000:
+                        print(f"✅ Found matching TX for uid {uid}!")
+                        return True
+
     except Exception as e:
         print(f"TON check error: {e}")
     return False
 
 async def auto_check_topups():
-    """Фонова задача — перевіряємо транзакції кожні 15с"""
+    """Фонова задача — перевіряємо транзакції кожні 10с"""
     while True:
-        await asyncio.sleep(15)
+        await asyncio.sleep(10)
         now = time.time()
         for uid, info in list(pending_topups.items()):
             if info.get("done"):
-                continue
-            if now - info["ts"] > 600:  # таймаут 10 хвилин
                 pending_topups.pop(uid, None)
                 continue
+            if now - info["ts"] > 900:  # таймаут 15 хвилин
+                pending_topups.pop(uid, None)
+                print(f"⏱ Topup timeout for uid {uid}")
+                continue
+            print(f"🔍 Checking TON tx for uid {uid}, amount {info['amount']}")
             found = await check_ton_tx(uid, info["amount"], info["ts"])
             if found:
                 info["done"] = True
@@ -100,8 +121,7 @@ async def auto_check_topups():
                         }))
                     except:
                         pass
-                pending_topups.pop(uid, None)
-                print(f"✅ Auto-credited {amount} TON to uid {uid}")
+                print(f"✅ Credited {amount} TON to uid {uid}, balance: {players[uid]['balance']}")
 
 # ── Стан гри ──────────────────────────────────────────────────────────────────
 clients: dict = {}
