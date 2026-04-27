@@ -7,7 +7,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 # ── Конфіг ────────────────────────────────────────────────────────────────────
 BOT_TOKEN   = os.getenv("BOT_TOKEN", "")
-TON_WALLET  = os.getenv("UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA", "")   # твій гаманець куди приходять TON
+TON_WALLET  = os.getenv("UQByn0JM5j3ZnVoUhW2zpnI5SYceWw0_y4GlPgb6C8jltCyZT", "")   # твій гаманець куди приходять TON
 TONCENTER   = "https://toncenter.com/api/v2"
 
 # ── NFT Каталог — реальні Telegram Gifts ─────────────────────────────────────
@@ -273,6 +273,19 @@ async def ws_ep(ws: WebSocket, uid: int):
         clients.pop(uid, None)
 
 # ── REST ендпоінти ────────────────────────────────────────────────────────────
+@app.get("/topup/{uid}/{amount}")
+async def get_topup(uid: int, amount: float):
+    if uid not in players:
+        players[uid] = {"name":"Player","nick":"","photo":"","balance":0,"nfts":[]}
+    players[uid]["balance"] = round(players[uid]["balance"] + amount, 4)
+    if uid in clients:
+        try:
+            await clients[uid].send_text(json.dumps({
+                "t":"topup","credited":amount,"bal":players[uid]["balance"]
+            }))
+        except: pass
+    return {"ok":True,"balance":players[uid]["balance"]}
+
 @app.post("/topup/{uid}/{amount}")
 async def manual_topup(uid: int, amount: float):
     if uid not in players:
