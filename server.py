@@ -116,7 +116,8 @@ class G:
     round_id = 0
     history: list = []
     def calc_mult(self, t):
-        return round(1.0 + t*0.06 + math.exp(t*0.10) - 1, 2)
+        # Та сама формула що і на клієнті
+        return round(math.exp(t * 0.07), 2)
 
 g = G()
 
