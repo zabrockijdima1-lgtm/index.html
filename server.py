@@ -1,3 +1,4 @@
+
 import asyncio, json, math, os, random, time, httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +11,44 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ════════════════════════════════════════════════════════
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
+
+# Кеш фото подарунків
+gift_photo_cache: dict = {}
+
+async def load_gift_photos():
+    global gift_photo_cache
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            r = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getAvailableGifts")
+            data = r.json()
+            if not data.get("ok"):
+                print(f"Gifts API error: {data}")
+                return
+            for gift in data["result"]["gifts"]:
+                star_count = gift.get("star_count", 0)
+                sticker    = gift.get("sticker", {})
+                thumb      = sticker.get("thumbnail") or {}
+                file_id    = thumb.get("file_id") or sticker.get("file_id","")
+                if not file_id: continue
+                r2 = await client.get(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
+                    params={"file_id": file_id}
+                )
+                d2 = r2.json()
+                if d2.get("ok"):
+                    path = d2["result"]["file_path"]
+                    url  = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{path}"
+                    gift_photo_cache[star_count] = url
+            print(f"✅ Loaded {len(gift_photo_cache)} gift photos")
+    except Exception as e:
+        print(f"load_gift_photos error: {e}")
+
+def get_gift_photo(floor_ton: float) -> str:
+    if not gift_photo_cache: return ""
+    target = int(floor_ton * 50)  # 1 TON ≈ 50 stars
+    closest = min(gift_photo_cache.keys(), key=lambda s: abs(s-target))
+    return gift_photo_cache.get(closest, "")
 
 # ── NFT Каталог — реальні Telegram Gifts з Fragment ──────────────────────────
 NFT_CATALOG = [
@@ -199,7 +238,11 @@ async def do_cashout(uid, mult):
     if not bet or bet.get("cashed"): return
     win = round(bet["amount"] * mult, 4)
     bet["cashed"] = True; bet["win"] = win; bet["mult"] = mult
-    nft = get_nft_for_win(win); bet["nft"] = nft
+    nft = get_nft_for_win(win)
+    if nft:
+        # Додаємо реальне фото з Telegram API
+        nft = {**nft, "photo": get_gift_photo(nft["floor"])}
+    bet["nft"] = nft
     if uid in players:
         if nft:
             players[uid].setdefault("nfts",[]).append({**nft,"won_at":mult,"win_ton":win})
@@ -218,6 +261,7 @@ async def do_cashout(uid, mult):
 async def startup():
     asyncio.create_task(game_loop())
     asyncio.create_task(auto_check_topups())
+    asyncio.create_task(load_gift_photos())
 
 # ── WebSocket ─────────────────────────────────────────────────────────────────
 @app.websocket("/ws/{uid}")
