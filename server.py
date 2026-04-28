@@ -265,6 +265,26 @@ async def ws_ep(ws: WebSocket, uid: int):
         clients.pop(uid, None)
 
 # ── REST ──────────────────────────────────────────────────────────────────────
+@app.get("/lottie/{gift_name}")
+async def proxy_lottie(gift_name: str):
+    """Проксуємо Lottie файли з nft.fragment.com щоб обійти CORS"""
+    from fastapi.responses import Response
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                f"https://nft.fragment.com/gift/{gift_name}.lottie.json",
+                headers={"Referer": "https://fragment.com/"}
+            )
+            if r.status_code == 200:
+                return Response(
+                    content=r.content,
+                    media_type="application/json",
+                    headers={"Access-Control-Allow-Origin": "*"}
+                )
+    except Exception as e:
+        print(f"Lottie proxy error: {e}")
+    return Response(content=b"{}", media_type="application/json")
+
 @app.get("/topup/{uid}/{amount}")
 async def get_topup(uid: int, amount: float):
     """Ручне зарахування (для адміна)"""
