@@ -1,4 +1,3 @@
-
 import asyncio, json, math, os, random, time, httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,26 +51,12 @@ def get_gift_photo(floor_ton: float) -> str:
 
 # ── NFT Каталог — реальні Telegram Gifts з Fragment ──────────────────────────
 NFT_CATALOG = [
-    {"id":"lollipop",  "name":"Lollipop",       "img":"https://nft.fragment.com/gift/lollipop-1.webp",       "floor":3.0,  "rarity":"Common",    "emoji":"🍭", "stars":"300+"},
-    {"id":"icecream",  "name":"Ice Cream",       "img":"https://nft.fragment.com/gift/icecream-1.webp",       "floor":2.8,  "rarity":"Common",    "emoji":"🍦", "stars":"340+"},
-    {"id":"cupcake",   "name":"Cupcake",         "img":"https://nft.fragment.com/gift/cupcake-1.webp",        "floor":2.9,  "rarity":"Common",    "emoji":"🧁", "stars":"340+"},
-    {"id":"torch",     "name":"Torch",           "img":"https://nft.fragment.com/gift/torch-1.webp",          "floor":2.9,  "rarity":"Common",    "emoji":"🔦", "stars":"344+"},
-    {"id":"popsicle",  "name":"Popsicle",        "img":"https://nft.fragment.com/gift/popsicle-1.webp",       "floor":2.8,  "rarity":"Common",    "emoji":"🍫", "stars":"350+"},
-    {"id":"flamingo",  "name":"Flamingo Ring",   "img":"https://nft.fragment.com/gift/flamingo-1.webp",       "floor":3.0,  "rarity":"Common",    "emoji":"🦩", "stars":"370+"},
-    {"id":"noodles",   "name":"Spicy Noodles",   "img":"https://nft.fragment.com/gift/spicynoodles-1.webp",   "floor":3.05, "rarity":"Common",    "emoji":"🍜", "stars":"377+"},
-    {"id":"poop",      "name":"Poop",            "img":"https://nft.fragment.com/gift/poop-1.webp",           "floor":3.33, "rarity":"Rare",      "emoji":"💩", "stars":"479+"},
-    {"id":"tgbag",     "name":"Telegram Bag",    "img":"https://nft.fragment.com/gift/telegrambag-1.webp",    "floor":3.5,  "rarity":"Rare",      "emoji":"👜", "stars":"500+"},
-    {"id":"clover",    "name":"Lucky Clover",    "img":"https://nft.fragment.com/gift/luckyclover-1.webp",    "floor":4.7,  "rarity":"Rare",      "emoji":"🍀", "stars":"554+"},
-    {"id":"seeds",     "name":"Pumpkin Seeds",   "img":"https://nft.fragment.com/gift/pumpkinseeds-1.webp",   "floor":4.8,  "rarity":"Rare",      "emoji":"🌰", "stars":"560+"},
-    {"id":"cooldog",   "name":"Cool Dog",        "img":"https://nft.fragment.com/gift/cooldog-1.webp",        "floor":3.8,  "rarity":"Rare",      "emoji":"🐶", "stars":"600+"},
-    {"id":"diamond",   "name":"Diamond Ring",    "img":"https://nft.fragment.com/gift/diamondring-1.webp",    "floor":15.0, "rarity":"Epic",      "emoji":"💍", "stars":"1800+"},
-    {"id":"trophy",    "name":"Trophy",          "img":"https://nft.fragment.com/gift/trophy-1.webp",         "floor":25.0, "rarity":"Epic",      "emoji":"🏆", "stars":"3000+"},
-    {"id":"rocket",    "name":"Rocket",          "img":"https://nft.fragment.com/gift/rocket-1.webp",         "floor":50.0, "rarity":"Legendary", "emoji":"🚀", "stars":"6000+"},
-    {"id":"crown",     "name":"Golden Crown",    "img":"https://nft.fragment.com/gift/goldencrown-1.webp",    "floor":100.0,"rarity":"Legendary", "emoji":"👑", "stars":"12000+"},
+    {"id":"chillflame", "name":"Chill Flames",  "floor":3.8, "rarity":"Common", "stars":"3.8 TON", "color":"#1a1a2e"},
+    {"id":"bdaycandle", "name":"B-Day Candles", "floor":4.0, "rarity":"Rare",   "stars":"4.0 TON", "color":"#2e1a2e"},
 ]
 
 def get_nft_for_win(win_ton: float):
-    if win_ton < 2.5:
+    if win_ton < 3.8:
         return None
     candidates = [n for n in NFT_CATALOG if n["floor"] <= win_ton]
     if not candidates:
