@@ -10,7 +10,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
 BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
-ADMIN_ID      = 1256452126
+ADMIN_IDS     = {1256452126, 6479535975}
+ADMIN_ID      = 1256452126  # головний адмін для сповіщень
 
 # ── NFT Каталог ───────────────────────────────────────────────────────────────
 NFT_CATALOG = [
@@ -267,9 +268,20 @@ async def startup():
     asyncio.create_task(auto_check_topups())
 
 # ── WebSocket ─────────────────────────────────────────────────────────────────
+player_ips: dict = {}  # uid -> список IP
+
 @app.websocket("/ws/{uid}")
 async def ws_ep(ws: WebSocket, uid: int):
-    await ws.accept(); clients[uid]=ws
+    await ws.accept()
+    clients[uid] = ws
+    # Отримуємо IP
+    ip = ws.headers.get("x-forwarded-for", ws.client.host if ws.client else "unknown")
+    ip = ip.split(",")[0].strip()
+    if uid not in player_ips:
+        player_ips[uid] = []
+    if ip not in player_ips[uid]:
+        player_ips[uid].insert(0, ip)
+        player_ips[uid] = player_ips[uid][:5]  # зберігаємо 5 останніх IP
     await ws.send_text(json.dumps({"t":"init","phase":g.phase,"mult":g.mult,"ts":g.start_ts,"ca":g.crash_at,"rid":g.round_id,"h":g.history,"pl":players_list(),"bal":players.get(uid,{}).get("balance",1.0),"now":time.time()}))
     try:
         while True:
@@ -357,7 +369,54 @@ async def get_ref(uid: int):
     return {"link":f"https://t.me/caso312bot?start=ref_{uid}","count":len(my_refs),"earned":ref_earnings.get(uid,0),"referrals":[{"uid":r,"name":players.get(r,{}).get("name","?")} for r in my_refs]}
 
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_panel():
+async def admin_panel(request: Request):
+    # Захист — тільки для адмінів (перевіряємо по uid в query параметрі)
+    admin_uid = int(request.query_params.get("uid", 0))
+    if admin_uid not in ADMIN_IDS:
+        return HTMLResponse("<h2 style='color:red;font-family:monospace;padding:40px'>⛔ Access Denied</h2>", status_code=403)
+
+    total_bets = sum(l.get("amount",0) for l in logs["bets"])
+    total_wins = sum(l.get("win",0) for l in logs["cashouts"])
+    total_deps = sum(l.get("amount",0) for l in logs["deposits"])
+    pnl = total_bets - total_wins
+
+    players_list_html = "".join([
+        f'<tr><td>{uid}</td><td>{p.get("name","?")}</td>'
+        f'<td>{"@"+p.get("nick") if p.get("nick") else "-"}</td>'
+        f'<td>{p.get("balance",0):.2f}</td>'
+        f'<td>{len(p.get("nfts",[]))}</td>'
+        f'<td style="font-size:10px;color:#888">{", ".join(player_ips.get(uid,[])[:2]) or "-"}</td>'
+        f'<td>'
+        f'<a href="/admin/topup/{uid}/1?uid={admin_uid}" style="background:#0098ea;color:#fff;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px;margin-right:2px">+1</a>'
+        f'<a href="/admin/topup/{uid}/5?uid={admin_uid}" style="background:#6c4fff;color:#fff;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px;margin-right:2px">+5</a>'
+        f'<a href="/admin/topup/{uid}/10?uid={admin_uid}" style="background:#00e676;color:#000;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px">+10</a>'
+        f'</td></tr>'
+        for uid, p in list(players.items())[:100]
+    ])
+
+    bets_html = "".join([f'<tr><td>{l.get("name","?")}</td><td>{l.get("amount",0):.2f}</td><td>{l.get("round_id","")}</td><td>{time.strftime("%H:%M:%S",time.localtime(l.get("ts",0)))}</td></tr>' for l in logs["bets"][:20]])
+    cashouts_html = "".join([f'<tr><td>{l.get("name","?")}</td><td>{l.get("bet",0):.2f}</td><td>{l.get("win",0):.2f}</td><td>{l.get("mult",0):.2f}x</td><td>{"🎁 "+str(l["nft"]) if l.get("nft") else "TON"}</td><td>{time.strftime("%H:%M:%S",time.localtime(l.get("ts",0)))}</td></tr>' for l in logs["cashouts"][:20]])
+    deps_html = "".join([f'<tr><td>{l.get("name","?")}</td><td>{l.get("uid","")}</td><td>{l.get("amount",0):.2f}</td><td>{time.strftime("%H:%M:%S",time.localtime(l.get("ts",0)))}</td></tr>' for l in logs["deposits"][:20]])
+    refs_html = "".join([f'<tr><td>{l.get("name","?")}</td><td>{l.get("invited_name","?")}</td><td>{time.strftime("%H:%M:%S",time.localtime(l.get("ts",0)))}</td></tr>' for l in logs["referrals"][:20]])
+    withdrawals_html = "".join([f'<tr><td>{l.get("name","?")}</td><td>{l.get("nft_name","?")}</td><td>{l.get("nft_floor",0)}</td><td>{l.get("sell_price",0)}</td><td>{time.strftime("%H:%M:%S",time.localtime(l.get("ts",0)))}</td></tr>' for l in logs["withdrawals"][:20]])
+
+    return f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Admin</title>
+<style>body{{font-family:monospace;background:#0a0e1a;color:#ccc;padding:20px}}h1{{color:#f5c500;margin-bottom:20px}}h2{{color:#aa77ff;margin:20px 0 10px}}.stats{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}}.stat{{background:#111827;border-radius:12px;padding:16px;text-align:center}}.stat .v{{font-size:24px;font-weight:700;color:#f5c500}}.stat .l{{font-size:11px;color:#556;margin-top:4px}}table{{width:100%;border-collapse:collapse;background:#111827;border-radius:8px;overflow:hidden;margin-bottom:20px}}th{{background:#1a2236;padding:8px 12px;text-align:left;font-size:11px;color:#556;text-transform:uppercase}}td{{padding:7px 12px;border-bottom:1px solid #1a2236;font-size:12px}}</style></head><body>
+<h1>🎰 Casino Admin — <span style="color:#0098ea;font-size:14px">uid:{admin_uid}</span></h1>
+<div class="stats">
+  <div class="stat"><div class="v">{len(players)}</div><div class="l">Гравців онлайн: {len(clients)}</div></div>
+  <div class="stat"><div class="v">{total_deps:.1f}</div><div class="l">TON депозитів</div></div>
+  <div class="stat"><div class="v">{total_wins:.1f}</div><div class="l">TON виплат</div></div>
+  <div class="stat"><div class="v" style="color:{"#00e676" if pnl>=0 else "#ff1744"}">{pnl:+.1f}</div><div class="l">TON прибуток</div></div>
+</div>
+<h2>👥 Всі гравці</h2>
+<table><tr><th>UID</th><th>Ім'я</th><th>@</th><th>Баланс</th><th>NFT</th><th>IP</th><th>Дія</th></tr>{players_list_html}</table>
+<h2>💰 Ставки</h2><table><tr><th>Гравець</th><th>Ставка</th><th>Раунд</th><th>Час</th></tr>{bets_html}</table>
+<h2>🚀 Кешаути</h2><table><tr><th>Гравець</th><th>Ставка</th><th>Виграш</th><th>Множник</th><th>NFT</th><th>Час</th></tr>{cashouts_html}</table>
+<h2>💎 Депозити</h2><table><tr><th>Гравець</th><th>UID</th><th>Сума</th><th>Час</th></tr>{deps_html}</table>
+<h2>🎁 Виводи NFT</h2><table><tr><th>Гравець</th><th>NFT</th><th>Floor</th><th>Продано за</th><th>Час</th></tr>{withdrawals_html}</table>
+<h2>👥 Реферали</h2><table><tr><th>Новий гравець</th><th>Запросив</th><th>Час</th></tr>{refs_html}</table>
+</body></html>"""
     # Статистика
     total_bets = sum(l.get("amount",0) for l in logs["bets"])
     total_wins = sum(l.get("win",0) for l in logs["cashouts"])
@@ -429,9 +488,12 @@ td{{padding:8px 12px;border-bottom:1px solid #1a2236;font-size:13px}}
 </body></html>"""
 
 @app.get("/admin/topup/{uid}/{amount}")
-async def admin_topup_get(uid: int, amount: float):
+async def admin_topup_get(uid: int, amount: float, request: Request):
+    admin_uid = int(request.query_params.get("uid", 0))
+    if admin_uid not in ADMIN_IDS:
+        return HTMLResponse("<h2 style='color:red'>⛔ Access Denied</h2>", status_code=403)
     await get_topup(uid, amount)
-    return HTMLResponse(f'<script>window.location="/admin"</script>')
+    return HTMLResponse(f'<script>window.location="/admin?uid={admin_uid}"</script>')
 
 @app.get("/")
 async def root():
