@@ -304,25 +304,34 @@ async def ws_ep(ws: WebSocket, uid: int):
                     pending_topups[uid]={"amount":amt,"ts":time.time(),"done":False}
                     await ws.send_text(json.dumps({"t":"topup_pending","amount":amt}))
             elif a=="withdraw_nft":
-                # Продаж NFT за TON на баланс
-                nft_id=d.get("nft_id"); sell_price=d.get("price",0)
+                nft_id=d.get("nft_id"); sell_price=float(d.get("price",0)); action_type=d.get("type","sell")
                 if uid in players and nft_id:
                     nfts=players[uid].get("nfts",[])
-                    found=[n for n in nfts if n.get("id")==nft_id]
-                    if found:
-                        nft=found[0]
-                        players[uid]["nfts"]=[n for n in nfts if n is not nft or nfts.index(n)!=nfts.index(found[0])]
-                        # Видаляємо перший знайдений
-                        for i,n in enumerate(players[uid]["nfts"]+[nft]):
-                            if n.get("id")==nft_id:
-                                players[uid]["nfts"]=[x for j,x in enumerate(players[uid].get("nfts",[])+[nft]) if j!=i]
-                                break
-                        players[uid]["nfts"]=[n for n in players.get(uid,{}).get("nfts",[]) if n.get("id")!=nft_id]
-                        players[uid]["balance"]=round(players[uid].get("balance",0)+sell_price,4)
-                        add_log("withdrawals",{"uid":uid,"name":players[uid].get("name","?"),"nft_name":nft.get("name"),"nft_floor":nft.get("floor"),"sell_price":sell_price})
-                        # Повідомлення адміну
-                        asyncio.create_task(send_tg(ADMIN_ID,f"🎁 <b>Вивід NFT</b>\nКористувач: {players[uid].get('name','?')} (uid: {uid})\nNFT: {nft.get('name')} (floor {nft.get('floor')} TON)\nПродано за: {sell_price} TON"))
-                        await ws.send_text(json.dumps({"t":"nft_sold","nft_id":nft_id,"amount":sell_price,"bal":players[uid]["balance"],"msg":"✅ NFT продано успішно!"}))
+                    # Знаходимо перший NFT з таким id
+                    found_nft=None
+                    new_nfts=[]
+                    removed=False
+                    for n in nfts:
+                        if n.get("id")==nft_id and not removed:
+                            found_nft=n; removed=True
+                        else:
+                            new_nfts.append(n)
+                    if found_nft:
+                        players[uid]["nfts"]=new_nfts
+                        name=players[uid].get("name","?")
+                        nick=players[uid].get("nick","")
+                        nick_str=f"@{nick}" if nick else f"uid:{uid}"
+                        if action_type=="sell":
+                            players[uid]["balance"]=round(players[uid].get("balance",0)+sell_price,4)
+                            add_log("withdrawals",{"uid":uid,"name":name,"nft_name":found_nft.get("name"),"nft_floor":found_nft.get("floor"),"sell_price":sell_price,"type":"sell"})
+                            await ws.send_text(json.dumps({"t":"nft_sold","nft_id":nft_id,"amount":sell_price,"bal":players[uid]["balance"],"msg":f"✅ {found_nft.get('name')} продано за {sell_price} TON!"}))
+                            asyncio.create_task(send_tg(ADMIN_ID,f"💰 <b>Продаж NFT</b>\nКористувач: {name} ({nick_str})\nNFT: {found_nft.get('name')} (floor {found_nft.get('floor')} TON)\nПродано за: {sell_price} TON"))
+                        else:
+                            add_log("withdrawals",{"uid":uid,"name":name,"nft_name":found_nft.get("name"),"nft_floor":found_nft.get("floor"),"sell_price":0,"type":"withdraw"})
+                            await ws.send_text(json.dumps({"t":"nft_withdrawn","nft_id":nft_id,"msg":f"✅ {found_nft.get('name')} успішно виведено!"}))
+                            asyncio.create_task(send_tg(ADMIN_ID,f"🎁 <b>Вивід NFT</b>\nКористувач: {name} ({nick_str})\nNFT: {found_nft.get('name')} (floor {found_nft.get('floor')} TON)\nЧас: {time.strftime('%H:%M:%S')}"))
+                    else:
+                        await ws.send_text(json.dumps({"t":"err","msg":"NFT не знайдено"}))
     except WebSocketDisconnect:
         clients.pop(uid,None)
 
@@ -358,10 +367,9 @@ async def admin_panel():
 
     players_list_html = "".join([
         f'<tr><td>{uid}</td><td>{p.get("name","?")}</td><td>{p.get("balance",0):.2f}</td><td>{len(p.get("nfts",[]))}</td>'
-        f'<td><form method="post" action="/admin/topup" style="display:inline">'
-        f'<input name="uid" value="{uid}" type="hidden">'
-        f'<input name="amount" type="number" step="0.1" min="0.1" style="width:70px;padding:2px"> '
-        f'<button type="submit" style="background:#0098ea;color:#fff;border:none;padding:2px 8px;border-radius:4px;cursor:pointer">+TON</button></form></td></tr>'
+        f'<td><a href="/admin/topup/{uid}/1" style="background:#0098ea;color:#fff;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px">+1</a> '
+        f'<a href="/admin/topup/{uid}/5" style="background:#6c4fff;color:#fff;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px">+5</a> '
+        f'<a href="/admin/topup/{uid}/10" style="background:#00e676;color:#000;padding:2px 8px;border-radius:4px;text-decoration:none;font-size:11px">+10</a></td></tr>'
         for uid, p in list(players.items())[:50]
     ])
 
@@ -420,11 +428,9 @@ td{{padding:8px 12px;border-bottom:1px solid #1a2236;font-size:13px}}
 <table><tr><th>Новий гравець</th><th>Запросив</th><th>Час</th></tr>{refs_html}</table>
 </body></html>"""
 
-@app.post("/admin/topup")
-async def admin_topup(request: Request):
-    form = await request.form()
-    uid = int(form.get("uid",0)); amount = float(form.get("amount",0))
-    if uid and amount>0: await get_topup(uid, amount)
+@app.get("/admin/topup/{uid}/{amount}")
+async def admin_topup_get(uid: int, amount: float):
+    await get_topup(uid, amount)
     return HTMLResponse(f'<script>window.location="/admin"</script>')
 
 @app.get("/")
