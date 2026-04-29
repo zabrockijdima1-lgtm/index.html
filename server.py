@@ -207,8 +207,14 @@ g = G()
 
 def gen_crash():
     r = random.random()
-    if r < 0.05: return 1.00
-    return round(min(0.95/(1-r), 500), 2)
+    # Збільшений house edge — частіше крашиться рано
+    if r < 0.10: return 1.00   # 10% шанс краш на 1x
+    if r < 0.25: return round(random.uniform(1.01, 1.5), 2)  # 15% між 1-1.5x
+    if r < 0.50: return round(random.uniform(1.5, 2.5), 2)   # 25% між 1.5-2.5x
+    if r < 0.70: return round(random.uniform(2.5, 5.0), 2)   # 20% між 2.5-5x
+    if r < 0.85: return round(random.uniform(5.0, 15.0), 2)  # 15% між 5-15x
+    if r < 0.95: return round(random.uniform(15.0, 50.0), 2) # 10% між 15-50x
+    return round(random.uniform(50.0, 200.0), 2)              # 5% велике
 
 async def broadcast(msg):
     data = json.dumps(msg)
