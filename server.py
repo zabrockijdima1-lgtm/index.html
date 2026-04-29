@@ -10,7 +10,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ════════════════════════════════════════════════════════
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
-BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "7509877748:AAHkFoiLYbCZ0LQxHHlsFVS0KMUQR2d0OoA")
 
 # Кеш фото подарунків
 gift_photo_cache: dict = {}
@@ -51,14 +51,98 @@ def get_gift_photo(floor_ton: float) -> str:
 
 # ── NFT Каталог — реальні Telegram Gifts з Fragment ──────────────────────────
 NFT_CATALOG = [
-    {"id":"chillflame", "name":"Chill Flames",  "floor":3.8, "rarity":"Common", "stars":"3.8 TON", "color":"#1a1a2e"},
-    {"id":"bdaycandle", "name":"B-Day Candles", "floor":4.0, "rarity":"Rare",   "stars":"4.0 TON", "color":"#2e1a2e"},
+    {"id":"chillflame","name":"Chill Flame","floor":2.59,"price":2.72,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"xmasstocking","name":"Xmas Stocking","floor":2.6,"price":2.73,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"vicecream","name":"Vice Cream","floor":2.6,"price":2.73,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"snakebox","name":"Snake Box","floor":2.64,"price":2.77,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"candycane","name":"Candy Cane","floor":2.65,"price":2.78,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"lunarsnake","name":"Lunar Snake","floor":2.74,"price":2.88,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"holidaydrink","name":"Holiday Drink","floor":2.82,"price":2.96,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"whipcupcake","name":"Whip Cupcake","floor":2.85,"price":2.99,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"winterwreath","name":"Winter Wreath","floor":2.85,"price":2.99,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"bigyear","name":"Big Year","floor":2.87,"price":3.01,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"poolfloat","name":"Pool Float","floor":2.96,"price":3.11,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"jesterhat","name":"Jester Hat","floor":3.09,"price":3.24,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"petsnake","name":"Pet Snake","floor":3.11,"price":3.27,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"partysparkler","name":"Party Sparkler","floor":3.16,"price":3.32,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"hypnolollipop","name":"Hypno Lollipop","floor":3.18,"price":3.34,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"tamagadget","name":"Tama Gadget","floor":3.23,"price":3.39,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"freshsocks","name":"Fresh Socks","floor":3.26,"price":3.42,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"jackinthebox","name":"Jack-in-the-Box","floor":3.36,"price":3.53,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"easteregg","name":"Easter Egg","floor":3.41,"price":3.58,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"spicedwine","name":"Spiced Wine","floor":3.47,"price":3.64,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"happybrownie","name":"Happy Brownie","floor":3.49,"price":3.66,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"lolpop","name":"Lol Pop","floor":3.61,"price":3.79,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"stellarrocket","name":"Stellar Rocket","floor":3.63,"price":3.81,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"moodpack","name":"Mood Pack","floor":3.67,"price":3.85,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"starnotepad","name":"Star Notepad","floor":3.71,"price":3.9,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"gingercookie","name":"Ginger Cookie","floor":3.73,"price":3.92,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"cookieheart","name":"Cookie Heart","floor":3.84,"price":4.03,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"snowglobe","name":"Snow Globe","floor":3.83,"price":4.02,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"hexhot","name":"Hex Pot","floor":3.87,"price":4.06,"rarity":"Common","color":"#0d2e1a"},
+    {"id":"bdaycandle","name":"B-Day Candle","floor":4.08,"price":4.28,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"bowtie","name":"Bow Tie","floor":4.27,"price":4.48,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"clovelpin","name":"Clover Pin","floor":4.07,"price":4.27,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"faithamulet","name":"Faith Amulet","floor":4.23,"price":4.44,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"snowmittens","name":"Snow Mittens","floor":4.29,"price":4.5,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"moonpendant","name":"Moon Pendant","floor":4.36,"price":4.58,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"lushbouquet","name":"Lush Bouquet","floor":4.47,"price":4.69,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"inputkey","name":"Input Key","floor":4.75,"price":4.99,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"timelessbook","name":"Timeless Book","floor":4.03,"price":4.23,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"spyagaric","name":"Spy Agaric","floor":4.56,"price":4.79,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"snoopdog","name":"Snoop Dogg","floor":4.71,"price":4.95,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"joyfulbundle","name":"Joyful Bundle","floor":5.61,"price":5.89,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"lightsword","name":"Light Sword","floor":5.04,"price":5.29,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"eternalcandle","name":"Eternal Candle","floor":5.39,"price":5.66,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"deskcalendar","name":"Desk Calendar","floor":5.48,"price":5.75,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"jollychimp","name":"Jolly Chimp","floor":5.88,"price":6.17,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"swagbag","name":"Swag Bag","floor":5.86,"price":6.15,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"evileye","name":"Evil Eye","floor":5.97,"price":6.27,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"sleighbell","name":"Sleigh Bell","floor":6.7,"price":7.04,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"berrybox","name":"Berry Box","floor":6.8,"price":7.14,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"hangingstar","name":"Hanging Star","floor":7.14,"price":7.5,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"jinglebells","name":"Jingle Bells","floor":7.4,"price":7.77,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"valentinebox","name":"Valentine Box","floor":8.22,"price":8.63,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"lovecandle","name":"Love Candle","floor":8.42,"price":8.84,"rarity":"Rare","color":"#0d1e3a"},
+    {"id":"crystalball","name":"Crystal Ball","floor":9.74,"price":10.23,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"skullflower","name":"Skull Flower","floor":9.75,"price":10.24,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"flyingbroom","name":"Flying Broom","floor":10.16,"price":10.67,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"tophat","name":"Top Hat","floor":10.59,"price":11.12,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"sakuraflower","name":"Sakura Flower","floor":10.81,"price":11.35,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"madpumpkin","name":"Mad Pumpkin","floor":10.89,"price":11.43,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"lovepotion","name":"Love Potion","floor":11.85,"price":12.44,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"snoopcigar","name":"Snoop Cigar","floor":12.08,"price":12.68,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"trappedheart","name":"Trapped Heart","floor":12.91,"price":13.56,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"skystiletto","name":"Sky Stilettos","floor":13.28,"price":13.94,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"ionicdrier","name":"Ionic Dryer","floor":13.53,"price":14.21,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"recordplayer","name":"Record Player","floor":14.24,"price":14.95,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"cupidcharm","name":"Cupid Charm","floor":17.41,"price":18.28,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"eternalrose","name":"Eternal Rose","floor":21.86,"price":22.95,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"electricskull","name":"Electric Skull","floor":24.69,"price":25.92,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"diamondring","name":"Diamond Ring","floor":25.28,"price":26.54,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"voodoodoll","name":"Voodoo Doll","floor":29.27,"price":30.73,"rarity":"Epic","color":"#1e0d3a"},
+    {"id":"toybear","name":"Toy Bear","floor":30.1,"price":31.61,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"nekohelmet","name":"Neko Helmet","floor":31.59,"price":33.17,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"lowrider","name":"Low Rider","floor":39.89,"price":41.88,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"genielamp","name":"Genie Lamp","floor":40.7,"price":42.74,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"swisswatch","name":"Swiss Watch","floor":43.13,"price":45.29,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"kissedfrong","name":"Kissed Frog","floor":48.89,"price":51.33,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"magicpotion","name":"Magic Potion","floor":61.44,"price":64.51,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"gemsignet","name":"Gem Signet","floor":55.87,"price":58.66,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"artisanbrick","name":"Artisan Brick","floor":68.34,"price":71.76,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"ionicgem","name":"Ion Gem","floor":69.82,"price":73.31,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"perfumebottle","name":"Perfume Bottle","floor":70.86,"price":74.4,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"westsideside","name":"Westside Sign","floor":70.94,"price":74.49,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"minioscars","name":"Mini Oscar","floor":72.22,"price":75.83,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"heroichelmet","name":"Heroic Helmet","floor":200.58,"price":210.61,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"astralshards","name":"Astral Shard","floor":151.69,"price":159.27,"rarity":"Legendary","color":"#2e1e00"},
+    {"id":"durovscap","name":"Durov's Cap","floor":576.88,"price":605.72,"rarity":"Legendary","color":"#2e1e00"},
 ]
 
 def get_nft_for_win(win_ton: float):
-    if win_ton < 3.8:
+    if win_ton < 2.72:
         return None
-    candidates = [n for n in NFT_CATALOG if n["floor"] <= win_ton]
+    candidates = [n for n in NFT_CATALOG if round(n["floor"]*1.05, 2) <= win_ton]
     if not candidates:
         return NFT_CATALOG[0]
     return max(candidates, key=lambda n: n["floor"])
