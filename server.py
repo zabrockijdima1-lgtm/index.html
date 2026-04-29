@@ -214,7 +214,28 @@ async def auto_check_topups():
 # ── Стан гри ─────────────────────────────────────────────────────────────────
 clients: dict = {}
 players: dict = {}
-bets:    dict = {}
+referrals: dict = {}  # uid -> invited_by uid
+ref_earnings: dict = {}  # uid -> total earned from referrals
+
+def get_ref_link(uid: int) -> str:
+    return f"https://t.me/caso312bot?start=ref_{uid}"
+
+def add_ref_bonus(referrer_uid: int, amount: float):
+    """Нараховуємо 5% реферального бонусу"""
+    bonus = round(amount * 0.05, 4)
+    if referrer_uid not in players:
+        players[referrer_uid] = {"name":"Player","nick":"","photo":"","balance":0,"nfts":[]}
+    players[referrer_uid]["balance"] = round(players[referrer_uid]["balance"] + bonus, 4)
+    ref_earnings[referrer_uid] = round(ref_earnings.get(referrer_uid, 0) + bonus, 4)
+    # Повідомляємо реферера
+    import asyncio
+    if referrer_uid in clients:
+        asyncio.create_task(clients[referrer_uid].send_text(__import__('json').dumps({
+            "t": "ref_bonus",
+            "bonus": bonus,
+            "bal": players[referrer_uid]["balance"]
+        })))
+    return bonusbets:    dict = {}
 
 class G:
     phase    = "waiting"
@@ -347,8 +368,12 @@ async def ws_ep(ws: WebSocket, uid: int):
             d = json.loads(await ws.receive_text())
             a = d.get("a")
             if a == "auth":
+                ref_by = d.get("ref_by")
                 if uid not in players:
                     players[uid] = {"name":d.get("name","Player"),"nick":d.get("nick",""),"photo":d.get("photo",""),"balance":1.0,"nfts":[]}
+                    # Перший вхід — зберігаємо реферера
+                    if ref_by and int(ref_by) != uid:
+                        referrals[uid] = int(ref_by)
                 else:
                     players[uid]["name"]  = d.get("name", players[uid]["name"])
                     players[uid]["nick"]  = d.get("nick", players[uid]["nick"])
@@ -404,9 +429,14 @@ async def get_topup(uid: int, amount: float):
     if uid not in players:
         players[uid] = {"name":"Player","nick":"","photo":"","balance":0,"nfts":[]}
     players[uid]["balance"] = round(players[uid]["balance"] + amount, 4)
+    # Реферальний бонус 5%
+    if uid in referrals:
+        ref_uid = referrals[uid]
+        bonus = add_ref_bonus(ref_uid, amount)
+        print(f"💰 Ref bonus {bonus} TON to {ref_uid} from {uid}")
     if uid in clients:
         try:
-            await clients[uid].send_text(json.dumps({
+            await clients[uid].send_text(__import__('json').dumps({
                 "t":"topup","credited":amount,"bal":players[uid]["balance"]
             }))
         except: pass
@@ -415,6 +445,16 @@ async def get_topup(uid: int, amount: float):
 @app.post("/topup/{uid}/{amount}")
 async def post_topup(uid: int, amount: float):
     return await get_topup(uid, amount)
+
+@app.get("/ref/{uid}")
+async def get_ref_stats(uid: int):
+    my_refs = [r for r, by in referrals.items() if by == uid]
+    return {
+        "link": get_ref_link(uid),
+        "count": len(my_refs),
+        "earned": ref_earnings.get(uid, 0),
+        "referrals": [{"uid": r, "name": players.get(r,{}).get("name","?")} for r in my_refs]
+    }
 
 @app.get("/")
 async def root():
