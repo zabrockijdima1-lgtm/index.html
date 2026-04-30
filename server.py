@@ -9,7 +9,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ── Конфіг ────────────────────────────────────────────────────────────────────
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
-BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "7509877748:AAHkFoiLYbCZ0LQxHHlsFVS0KMUQR2d0OoA")
 ADMIN_IDS     = {1256452126, 6479535975}
 ADMIN_ID      = 1256452126  # головний адмін для сповіщень
 
@@ -269,7 +269,9 @@ async def do_cashout(uid, mult):
     bet=bets.get(uid)
     if not bet or bet.get("cashed"): return
     win=round(bet["amount"]*mult,4); bet["cashed"]=True; bet["win"]=win; bet["mult"]=mult
-    nft=get_nft_for_win(win); bet["nft"]=nft
+    # NFT тільки якщо множник >= 1.1
+    nft=get_nft_for_win(win) if mult >= 1.1 else None
+    bet["nft"]=nft
     p=players.get(uid,{})
     if nft:
         p.setdefault("nfts",[]).append({**nft,"won_at":mult,"win_ton":win,"ts":time.time()})
