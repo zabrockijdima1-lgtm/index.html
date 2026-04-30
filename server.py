@@ -227,34 +227,27 @@ NFT_WITHDRAW_STARS = 25  # комісія за вивід NFT зірками
 
 @app.get("/stars/withdraw-invoice/{uid}/{nft_id}/{nft_name}")
 async def create_withdraw_invoice(uid: int, nft_id: str, nft_name: str):
-    # Перевіряємо що NFT справді є у гравця
-    p = players.get(uid)
-    if not p:
-        return JSONResponse({"ok": False, "error": "Гравець не знайдений"})
-    has_nft = any(n.get("id") == nft_id for n in p.get("nfts", []))
-    if not has_nft:
-        return JSONResponse({"ok": False, "error": "NFT не знайдено в інвентарі"})
-
     payload = json.dumps({"uid": uid, "nft_id": nft_id, "type": "nft_withdraw"})
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink",
                 json={
-                    "title": f"Вивід NFT: {nft_name}",
-                    "description": f"Комісія за вивід NFT «{nft_name}» у Telegram гаманець",
+                    "title": f"NFT Withdrawal: {nft_name}",
+                    "description": f"Fee for withdrawing NFT «{nft_name}» to your Telegram wallet",
                     "payload": payload,
                     "currency": "XTR",
-                    "prices": [{"label": "Комісія виводу", "amount": NFT_WITHDRAW_STARS}]
+                    "prices": [{"label": "Withdrawal fee", "amount": NFT_WITHDRAW_STARS}]
                 }
             )
             data = r.json()
         if not data.get("ok"):
-            return JSONResponse({"ok": False, "error": data.get("description", "Помилка Telegram")})
+            print(f"createInvoiceLink error: {data}")
+            return JSONResponse({"ok": False, "error": data.get("description", "Telegram error")})
         return JSONResponse({"ok": True, "invoice_link": data["result"]})
     except Exception as e:
         print(f"Withdraw invoice error: {e}")
-        return JSONResponse({"ok": False, "error": "Помилка сервера"})
+        return JSONResponse({"ok": False, "error": "Server error"})
 
 # ── Stars: створення інвойсу ──────────────────────────────────────────────────
 @app.get("/stars/invoice/{uid}/{stars}")
@@ -415,17 +408,20 @@ g = G()
 
 def gen_crash():
     r = random.random()
-    if r < 0.15: return 1.00
-    if r < 0.35: return round(random.uniform(1.01, 1.3), 2)
-    if r < 0.55: return round(random.uniform(1.3, 2.0), 2)
-    if r < 0.70: return round(random.uniform(2.0, 4.0), 2)
-    if r < 0.82: return round(random.uniform(4.0, 10.0), 2)
-    if r < 0.92: return round(random.uniform(10.0, 30.0), 2)
-    if r < 0.97: return round(random.uniform(30.0, 100.0), 2)
-    return round(random.uniform(100.0, 300.0), 2)
+    # Розподіл: природний але не жадібний
+    if r < 0.08: return 1.00                                      #  8% — одразу краш
+    if r < 0.22: return round(random.uniform(1.01, 1.5), 2)      # 14% — дуже низько
+    if r < 0.40: return round(random.uniform(1.5,  2.5), 2)      # 18% — низько
+    if r < 0.58: return round(random.uniform(2.5,  5.0), 2)      # 18% — середньо (2-5x)
+    if r < 0.72: return round(random.uniform(5.0,  12.0), 2)     # 14% — добре (5-12x)
+    if r < 0.83: return round(random.uniform(12.0, 25.0), 2)     # 11% — дуже добре
+    if r < 0.91: return round(random.uniform(25.0, 50.0), 2)     #  8% — відмінно
+    if r < 0.97: return round(random.uniform(50.0, 80.0), 2)     #  6% — велике
+    return round(random.uniform(80.0, 100.0), 2)                  #  3% — максимум
 
 def gen_crash_no_bets():
-    return round(random.uniform(70.0, 150.0), 2)
+    # Коли ніхто не ставив — показуємо красивий великий краш щоб залучити
+    return round(random.uniform(30.0, 100.0), 2)
 
 async def broadcast(msg):
     data = json.dumps(msg)
