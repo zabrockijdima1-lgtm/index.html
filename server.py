@@ -9,7 +9,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ── Конфіг ────────────────────────────────────────────────────────────────────
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
-BOT_TOKEN     = os.getenv("BOT_TOKEN", "7509877748:AAHkFoiLYbCZ0LQxHHlsFVS0KMUQR2d0OoA")
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
 ADMIN_IDS     = {1256452126, 6479535975}
 ADMIN_ID      = 1256452126  # головний адмін для сповіщень
 
@@ -179,12 +179,16 @@ async def auto_check_topups():
                 if uid in referrals:
                     ref_uid = referrals[uid]
                     bonus = round(amt * 0.05, 4)
-                    if ref_uid in players:
-                        players[ref_uid]["balance"] = round(players[ref_uid]["balance"] + bonus, 4)
-                        ref_earnings[ref_uid] = round(ref_earnings.get(ref_uid, 0) + bonus, 4)
-                        if ref_uid in clients:
-                            try: await clients[ref_uid].send_text(json.dumps({"t":"ref_bonus","bonus":bonus,"bal":players[ref_uid]["balance"]}))
-                            except: pass
+                    # Створюємо гравця якщо ще не існує
+                    if ref_uid not in players:
+                        players[ref_uid] = {"name":"?","nick":"","photo":"","balance":0,"nfts":[]}
+                    players[ref_uid]["balance"] = round(players[ref_uid]["balance"] + bonus, 4)
+                    ref_earnings[ref_uid] = round(ref_earnings.get(ref_uid, 0) + bonus, 4)
+                    add_log("deposits", {"uid":ref_uid,"name":players[ref_uid].get("name","?"),"amount":bonus,"note":f"ref bonus від {uid}"})
+                    if ref_uid in clients:
+                        try: await clients[ref_uid].send_text(json.dumps({"t":"ref_bonus","bonus":bonus,"bal":players[ref_uid]["balance"]}))
+                        except: pass
+                    await send_tg(ref_uid, f"👥 <b>Реферальний бонус!</b>\nВаш реферал поповнив баланс на {amt} TON\nВаш бонус: <b>+{bonus} TON</b>")
                 # Лог депозиту
                 add_log("deposits", {"uid":uid,"name":players[uid].get("name","?"),"amount":amt})
                 if uid in clients:
@@ -375,6 +379,18 @@ async def get_topup(uid: int, amount: float):
     if uid not in players: players[uid]={"name":"Player","nick":"","photo":"","balance":0,"nfts":[]}
     players[uid]["balance"]=round(players[uid]["balance"]+amount,4)
     add_log("deposits",{"uid":uid,"name":players[uid].get("name","?"),"amount":amount})
+    # Реферальний бонус
+    if uid in referrals:
+        ref_uid = referrals[uid]
+        bonus = round(amount * 0.05, 4)
+        if ref_uid not in players:
+            players[ref_uid] = {"name":"?","nick":"","photo":"","balance":0,"nfts":[]}
+        players[ref_uid]["balance"] = round(players[ref_uid]["balance"] + bonus, 4)
+        ref_earnings[ref_uid] = round(ref_earnings.get(ref_uid, 0) + bonus, 4)
+        if ref_uid in clients:
+            try: await clients[ref_uid].send_text(json.dumps({"t":"ref_bonus","bonus":bonus,"bal":players[ref_uid]["balance"]}))
+            except: pass
+        await send_tg(ref_uid, f"👥 <b>Реферальний бонус!</b>\nВаш реферал поповнив на {amount} TON\nВаш бонус: <b>+{bonus} TON</b>")
     if uid in clients:
         try: await clients[uid].send_text(json.dumps({"t":"topup","credited":amount,"bal":players[uid]["balance"]}))
         except: pass
