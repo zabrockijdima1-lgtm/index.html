@@ -200,7 +200,7 @@ class G:
     crash_at = 1.0
     start_ts = 0.0
     round_id = 0
-    next_hook = random.randint(12, 16)
+    next_hook = random.randint(8, 25)
     history: list = []
     def calc_mult(self, t): return round(math.exp(t * 0.07), 2)
 
@@ -240,11 +240,11 @@ async def game_loop():
         # Кожні 12-16 раундів — великий краш, але ТІЛЬКИ якщо ніхто не ставив
         if g.round_id % g.next_hook == 0 and len(bets) == 0:
             g.crash_at = gen_crash_no_bets()
-            g.next_hook = random.randint(12, 16)
+            g.next_hook = random.randint(8, 25)
         else:
             g.crash_at = gen_crash()
             if g.round_id % g.next_hook == 0:
-                g.next_hook = random.randint(12, 16)  # скидаємо лічильник навіть якщо були ставки
+                g.next_hook = random.randint(8, 25)  # скидаємо лічильник навіть якщо були ставки
         for cd in range(5,0,-1):
             await broadcast({"t":"cd","sec":cd,"rid":g.round_id,"ca":g.crash_at,"now":time.time()})
             await asyncio.sleep(1)
