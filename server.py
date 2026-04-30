@@ -237,12 +237,14 @@ async def game_loop():
     while True:
         g.phase="waiting"; g.mult=1.0; g.round_id+=1
         bets.clear()
-        # Кожні 12-16 раундів — великий краш для залучення глядачів
-        if g.round_id % g.next_hook == 0:
+        # Кожні 12-16 раундів — великий краш, але ТІЛЬКИ якщо ніхто не ставив
+        if g.round_id % g.next_hook == 0 and len(bets) == 0:
             g.crash_at = gen_crash_no_bets()
             g.next_hook = random.randint(12, 16)
         else:
             g.crash_at = gen_crash()
+            if g.round_id % g.next_hook == 0:
+                g.next_hook = random.randint(12, 16)  # скидаємо лічильник навіть якщо були ставки
         for cd in range(5,0,-1):
             await broadcast({"t":"cd","sec":cd,"rid":g.round_id,"ca":g.crash_at,"now":time.time()})
             await asyncio.sleep(1)
