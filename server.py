@@ -222,6 +222,40 @@ async def auto_check_topups():
                 add_log("deposits", {"uid": uid, "name": players[uid].get("name", "?"), "amount": amt})
                 await send_tg(ADMIN_ID, f"💰 <b>Депозит TON</b>\nКористувач: {players[uid].get('name','?')} (uid: {uid})\nСума: {amt} TON\nБаланс: {bal} TON")
 
+# ── Stars: інвойс за вивід NFT (25 Stars) ────────────────────────────────────
+NFT_WITHDRAW_STARS = 25  # комісія за вивід NFT зірками
+
+@app.get("/stars/withdraw-invoice/{uid}/{nft_id}/{nft_name}")
+async def create_withdraw_invoice(uid: int, nft_id: str, nft_name: str):
+    # Перевіряємо що NFT справді є у гравця
+    p = players.get(uid)
+    if not p:
+        return JSONResponse({"ok": False, "error": "Гравець не знайдений"})
+    has_nft = any(n.get("id") == nft_id for n in p.get("nfts", []))
+    if not has_nft:
+        return JSONResponse({"ok": False, "error": "NFT не знайдено в інвентарі"})
+
+    payload = json.dumps({"uid": uid, "nft_id": nft_id, "type": "nft_withdraw"})
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/createInvoiceLink",
+                json={
+                    "title": f"Вивід NFT: {nft_name}",
+                    "description": f"Комісія за вивід NFT «{nft_name}» у Telegram гаманець",
+                    "payload": payload,
+                    "currency": "XTR",
+                    "prices": [{"label": "Комісія виводу", "amount": NFT_WITHDRAW_STARS}]
+                }
+            )
+            data = r.json()
+        if not data.get("ok"):
+            return JSONResponse({"ok": False, "error": data.get("description", "Помилка Telegram")})
+        return JSONResponse({"ok": True, "invoice_link": data["result"]})
+    except Exception as e:
+        print(f"Withdraw invoice error: {e}")
+        return JSONResponse({"ok": False, "error": "Помилка сервера"})
+
 # ── Stars: створення інвойсу ──────────────────────────────────────────────────
 @app.get("/stars/invoice/{uid}/{stars}")
 async def create_stars_invoice(uid: int, stars: int):
@@ -277,30 +311,74 @@ async def tg_webhook(request: Request):
     if payment and payment.get("currency") == "XTR":
         try:
             payload = json.loads(payment["invoice_payload"])
-            uid = int(payload["uid"])
-            stars = int(payload["stars"])
-            ton_amount = float(payload["ton"])
         except Exception as e:
             print(f"Stars payload parse error: {e}")
             return JSONResponse({"ok": True})
 
-        bal = await credit_balance(uid, ton_amount, source="stars")
-        add_log("stars", {
-            "uid": uid,
-            "name": players.get(uid, {}).get("name", "?"),
-            "stars": stars,
-            "ton": ton_amount
-        })
-        add_log("deposits", {
-            "uid": uid,
-            "name": players.get(uid, {}).get("name", "?"),
-            "amount": ton_amount,
-            "note": f"Stars x{stars}"
-        })
-        # Повідомлення гравцю в чат
-        await send_tg(uid, f"⭐ <b>Stars зараховано!</b>\n{stars} Stars → <b>{ton_amount} TON</b> на ігровий баланс\nПоточний баланс: {bal} TON")
-        # Повідомлення адміну
-        await send_tg(ADMIN_ID, f"⭐ <b>Stars депозит</b>\nКористувач: {players.get(uid,{}).get('name','?')} (uid: {uid})\nStars: {stars} → {ton_amount} TON\nБаланс: {bal} TON")
+        pay_type = payload.get("type", "deposit")
+
+        # ── Вивід NFT за Stars ────────────────────────────────────────────
+        if pay_type == "nft_withdraw":
+            uid = int(payload["uid"])
+            nft_id = payload["nft_id"]
+            p = players.get(uid)
+            if p:
+                nfts = p.get("nfts", [])
+                found_nft = None
+                new_nfts = []
+                removed = False
+                for n in nfts:
+                    if n.get("id") == nft_id and not removed:
+                        found_nft = n; removed = True
+                    else:
+                        new_nfts.append(n)
+                if found_nft:
+                    p["nfts"] = new_nfts
+                    name = p.get("name", "?")
+                    nick = p.get("nick", "")
+                    nick_str = f"@{nick}" if nick else f"uid:{uid}"
+                    add_log("withdrawals", {
+                        "uid": uid, "name": name,
+                        "nft_name": found_nft.get("name"),
+                        "nft_floor": found_nft.get("floor"),
+                        "sell_price": 0, "type": "withdraw_stars"
+                    })
+                    if uid in clients:
+                        try:
+                            await clients[uid].send_text(json.dumps({
+                                "t": "nft_withdrawn",
+                                "nft_id": nft_id,
+                                "msg": f"✅ {found_nft.get('name')} успішно виведено!"
+                            }))
+                        except: pass
+                    await send_tg(uid, f"✅ <b>NFT виведено!</b>\n{found_nft.get('name')} відправлено у ваш гаманець\nКомісія: {NFT_WITHDRAW_STARS} ⭐")
+                    await send_tg(ADMIN_ID, f"🎁 <b>Вивід NFT (Stars)</b>\nКористувач: {name} ({nick_str})\nNFT: {found_nft.get('name')} (floor {found_nft.get('floor')} TON)\nКомісія: {NFT_WITHDRAW_STARS} ⭐")
+
+        # ── Поповнення балансу Stars ──────────────────────────────────────
+        else:
+            try:
+                uid = int(payload["uid"])
+                stars = int(payload["stars"])
+                ton_amount = float(payload["ton"])
+            except Exception as e:
+                print(f"Stars deposit payload error: {e}")
+                return JSONResponse({"ok": True})
+
+            bal = await credit_balance(uid, ton_amount, source="stars")
+            add_log("stars", {
+                "uid": uid,
+                "name": players.get(uid, {}).get("name", "?"),
+                "stars": stars,
+                "ton": ton_amount
+            })
+            add_log("deposits", {
+                "uid": uid,
+                "name": players.get(uid, {}).get("name", "?"),
+                "amount": ton_amount,
+                "note": f"Stars x{stars}"
+            })
+            await send_tg(uid, f"⭐ <b>Stars зараховано!</b>\n{stars} Stars → <b>{ton_amount} TON</b> на ігровий баланс\nПоточний баланс: {bal} TON")
+            await send_tg(ADMIN_ID, f"⭐ <b>Stars депозит</b>\nКористувач: {players.get(uid,{}).get('name','?')} (uid: {uid})\nStars: {stars} → {ton_amount} TON\nБаланс: {bal} TON")
 
     return JSONResponse({"ok": True})
 
