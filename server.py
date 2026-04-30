@@ -9,7 +9,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 # ── Конфіг ────────────────────────────────────────────────────────────────────
 TON_WALLET    = "UQAfazCyjGjugOf73_LrxUuLvxSmExM_8loArhgATwKXU6yA"
 TONCENTER_KEY = "062f53efeb759f033896aab86a1f423f4102443694799e2dd34e8c14e7f4e9f0"
-BOT_TOKEN     = os.getenv("BOT_TOKEN", "8757352545:AAGlu9yQu97JHfGljZH4ocqOBU_-sJm1KR8")
+BOT_TOKEN     = os.getenv("BOT_TOKEN", "7509877748:AAHkFoiLYbCZ0LQxHHlsFVS0KMUQR2d0OoA")
 ADMIN_IDS     = {1256452126, 6479535975}
 ADMIN_ID      = 1256452126  # головний адмін для сповіщень
 
@@ -200,6 +200,7 @@ class G:
     crash_at = 1.0
     start_ts = 0.0
     round_id = 0
+    next_hook = random.randint(12, 16)
     history: list = []
     def calc_mult(self, t): return round(math.exp(t * 0.07), 2)
 
@@ -207,14 +208,19 @@ g = G()
 
 def gen_crash():
     r = random.random()
-    # Збільшений house edge — частіше крашиться рано
-    if r < 0.10: return 1.00   # 10% шанс краш на 1x
-    if r < 0.25: return round(random.uniform(1.01, 1.5), 2)  # 15% між 1-1.5x
-    if r < 0.50: return round(random.uniform(1.5, 2.5), 2)   # 25% між 1.5-2.5x
-    if r < 0.70: return round(random.uniform(2.5, 5.0), 2)   # 20% між 2.5-5x
-    if r < 0.85: return round(random.uniform(5.0, 15.0), 2)  # 15% між 5-15x
-    if r < 0.95: return round(random.uniform(15.0, 50.0), 2) # 10% між 15-50x
-    return round(random.uniform(50.0, 200.0), 2)              # 5% велике
+    # Базовий розподіл
+    if r < 0.15: return 1.00
+    if r < 0.35: return round(random.uniform(1.01, 1.3), 2)
+    if r < 0.55: return round(random.uniform(1.3, 2.0), 2)
+    if r < 0.70: return round(random.uniform(2.0, 4.0), 2)
+    if r < 0.82: return round(random.uniform(4.0, 10.0), 2)
+    if r < 0.92: return round(random.uniform(10.0, 30.0), 2)
+    if r < 0.97: return round(random.uniform(30.0, 100.0), 2)
+    return round(random.uniform(100.0, 300.0), 2)
+
+def gen_crash_no_bets():
+    """Коли ніхто не ставив — показуємо великий краш щоб залучити"""
+    return round(random.uniform(70.0, 150.0), 2)
 
 async def broadcast(msg):
     data = json.dumps(msg)
@@ -229,8 +235,14 @@ def players_list():
 
 async def game_loop():
     while True:
-        g.phase="waiting"; g.mult=1.0; g.crash_at=gen_crash(); g.round_id+=1
+        g.phase="waiting"; g.mult=1.0; g.round_id+=1
         bets.clear()
+        # Кожні 12-16 раундів — великий краш для залучення глядачів
+        if g.round_id % g.next_hook == 0:
+            g.crash_at = gen_crash_no_bets()
+            g.next_hook = random.randint(12, 16)
+        else:
+            g.crash_at = gen_crash()
         for cd in range(5,0,-1):
             await broadcast({"t":"cd","sec":cd,"rid":g.round_id,"ca":g.crash_at,"now":time.time()})
             await asyncio.sleep(1)
